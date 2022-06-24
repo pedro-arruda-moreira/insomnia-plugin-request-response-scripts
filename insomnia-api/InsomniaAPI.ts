@@ -43,11 +43,24 @@ export interface Environment extends OpenObject {
     getEnvironmentId(): string;
 }
 
+export interface RequestContextRequestBodyParam {
+    name: string;
+    value: string;
+    id: string;
+}
+
+export interface RequestContextRequestBody {
+    mimeType: string;
+    text?: string;
+    params?: RequestContextRequestBodyParam[];
+}
+
 export interface RequestContextRequest {
     getEnvironment(): Environment;
     getId(): string;
     getHeaders(): Array<{ name: string, value: string }>;
     removeHeader(name: string): void;
+    getBody(): RequestContextRequestBody | undefined;
 }
 
 export interface RequestContext {
@@ -74,9 +87,19 @@ export interface TemplateTagHandlerLiveDisplayNameArgument {
     value: string;
 }
 
+export interface TemplateTagHandlerArgOption {
+    displayName: string | ((args: string[]) => string);
+    value: string;
+}
+
 export interface TemplateTagHandlerArg {
     displayName: string;
     type: string;
+    options?: TemplateTagHandlerArgOption[];
+    description?: string;
+    defaultValue?: boolean | string;
+    help?: string;
+    validate?: (value: string) => string;
 }
 
 export interface TemplateTagHandler {
@@ -85,7 +108,7 @@ export interface TemplateTagHandler {
     name: string;
     description: string;
     args: TemplateTagHandlerArg[];
-    run: (context: RenderContext, ...args: string[]) => string | Promise<string>;
+    run: (context: RenderContext, ...args: (string | boolean)[]) => string | Promise<string>;
 }
 
 export type RequestHook = (context: RequestContext) => void | Promise<void>;

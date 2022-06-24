@@ -59,10 +59,14 @@ export function isValidScript(tryLocation: string, kind: 'request' | 'response')
 
 export async function tryExecuteScript(tryLocation: string, context: any, kind: 'request' | 'response'): Promise<boolean> {
     let location = '';
-    if(isValidScript(tryLocation, kind)) {
-        location = fromBase64(tryLocation.substring(`${SCRIPT_PLACEHOLDER}${kind}`.length));
+    if(kind == 'response') {
+        if(isValidScript(tryLocation, kind)) {
+            location = fromBase64(tryLocation.substring(`${SCRIPT_PLACEHOLDER}${kind}`.length));
+        } else {
+            return false;
+        }
     } else {
-        return false;
+        location = `${getScriptsDir()}${separator}${tryLocation}`;
     }
     const originalExpect = global.expect;
     try {

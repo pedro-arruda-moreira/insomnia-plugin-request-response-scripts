@@ -1,6 +1,7 @@
-import { RequestContext, RequestContextRequest, RequestHook, ResponseContext, ResponseHook } from "../insomnia-api/InsomniaAPI";
+import { SCRIPT_PLACEHOLDER } from "../constants";
+import { RequestContext, RequestContextRequest, RequestContextRequestBodyParam, RequestHook, ResponseContext, ResponseHook } from "../insomnia-api/InsomniaAPI";
 import { isValidScript, tryExecuteScript } from "../script-handler/loader";
-import { getVarStore, OpenObject } from "../Utils";
+import { getVarStore } from "../Utils";
 
 const RESPONSE_SCRIPT_KEY = '_response_scripts';
 
@@ -11,13 +12,25 @@ export const requestHook: RequestHook = async (context: RequestContext) => {
     getVarStore(rq, false)[RESPONSE_SCRIPT_KEY] = responseScriptStore;
     const headers = rq.getHeaders();
     for(const header of headers) {
-        if(await tryExecuteScript(header.name, context, 'request')) {
-            rq.removeHeader(header.name);
-        } else if(isValidScript(header.name, 'response')) {
+        if(isValidScript(header.name, 'response')) {
             responseScriptStore.push(header.name);
             rq.removeHeader(header.name);
         }
     }
+    const body = rq.getBody();
+    if(body == undefined) {
+        return;
+    }
+    if(body.mimeType != 'application/x-www-form-urlencoded' && body.mimeType != 'multipart/form-data') {
+        return;
+    }
+    const newParams: RequestContextRequestBodyParam[] = [];
+    for(const param of body.params as RequestContextRequestBodyParam[]) {
+        if(param.name != SCRIPT_PLACEHOLDER) {
+            newParams.push(param);
+        }
+    }
+    body.params = newParams;
 };
 
 export const responseHook: ResponseHook = async (context: ResponseContext) => {
